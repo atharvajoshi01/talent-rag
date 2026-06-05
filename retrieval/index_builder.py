@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from ..embeddings import EmbeddingModel, get_embedding_model
 from ..vectorstore import FAISSVectorStore
-from ..preprocessing import DocumentProcessor, Chunk
+from ..preprocessing import DocumentProcessor
 
 
 class IndexBuilder:

@@ -15,7 +15,7 @@ from ..embeddings import EmbeddingModel
 from ..vectorstore import FAISSVectorStore
 from .retriever import RAGRetriever, RetrievalResult
 from .reranker import Reranker
-from .prompt_builder import PromptBuilder, PromptContext, QueryType
+from .prompt_builder import PromptBuilder, PromptContext
 from .generator import Generator, GenerationResult
 from .evaluator import ResponseEvaluator, EvaluationResult
 

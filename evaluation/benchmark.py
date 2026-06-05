@@ -14,7 +14,7 @@ from datetime import datetime
 
 from loguru import logger
 
-from .metrics import MetricsCalculator, RetrievalMetrics
+from .metrics import MetricsCalculator
 
 
 @dataclass

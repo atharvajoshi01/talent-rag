@@ -12,7 +12,7 @@ from typing import Any, Optional
 from loguru import logger
 
 from .text_cleaner import TextCleaner
-from .chunker import DocumentChunker, Chunk, DocumentType
+from .chunker import DocumentChunker, Chunk
 
 
 class DocumentProcessor:

@@ -9,7 +9,6 @@ import math
 from typing import Any, Optional
 from dataclasses import dataclass, field
 
-import numpy as np
 from loguru import logger
 
 

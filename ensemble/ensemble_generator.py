@@ -321,7 +321,6 @@ class VotingEnsemble:
         Returns:
             Dictionary with voting results
         """
-        import re
 
         votes = {cid: 0 for cid in candidate_ids}
         responses = []

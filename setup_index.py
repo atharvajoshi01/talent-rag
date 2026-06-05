@@ -14,8 +14,8 @@ load_dotenv(Path(__file__).parent / ".env")
 
 print(f"API Key loaded: {os.getenv('OPENAI_API_KEY', 'NOT SET')[:25]}...")
 
-from talent_rag.retrieval import IndexBuilder
-from talent_rag.config import settings
+from talent_rag.retrieval import IndexBuilder  # noqa: E402
+from talent_rag.config import settings  # noqa: E402
 
 print("Building index with Ollama embeddings...")
 print("Make sure Ollama is running and nomic-embed-text is pulled:")

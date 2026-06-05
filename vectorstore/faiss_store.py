@@ -5,7 +5,6 @@ This module provides a FAISS-based vector store implementation
 with support for both flat and HNSW indices.
 """
 
-import json
 import pickle
 from pathlib import Path
 from typing import Any, Optional
@@ -284,8 +283,8 @@ class FAISSVectorStore:
             return self.search(query_embedding, k)
 
         def filter_fn(metadata: dict[str, Any]) -> bool:
-            for field, condition in filters.items():
-                value = metadata.get(field)
+            for field_name, condition in filters.items():
+                value = metadata.get(field_name)
 
                 if isinstance(condition, dict):
                     # Range filter

@@ -2,7 +2,6 @@
 Tests for preprocessing module.
 """
 
-import pytest
 from talent_rag.preprocessing import TextCleaner, DocumentChunker, Chunk
 from talent_rag.preprocessing.chunker import DocumentType
 

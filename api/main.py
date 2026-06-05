@@ -6,9 +6,6 @@ Talent Intelligence Assistant.
 """
 
 import json
-import time
-from pathlib import Path
-from typing import Any, Optional
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Depends
@@ -20,12 +17,9 @@ from .schemas import (
     CompareCandidatesRequest,
     AskRequest,
     RAGResponseSchema,
-    CandidateSearchResponse,
-    ComparisonResponse,
     HealthResponse,
     ErrorResponse,
     EvidenceItem,
-    CandidateMatch,
     MetaInfo
 )
 
@@ -244,8 +238,6 @@ async def search_candidates(
     Uses semantic search with optional filters to find
     the best matching candidates.
     """
-    start_time = time.time()
-
     try:
         # Build filters
         filters = None

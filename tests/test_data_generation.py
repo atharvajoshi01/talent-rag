@@ -2,7 +2,6 @@
 Tests for data generation module.
 """
 
-import pytest
 from talent_rag.data_generation import CandidateGenerator, RoleGenerator
 
 

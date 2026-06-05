@@ -49,7 +49,7 @@ def cmd_build_index(args):
         use_openai_embeddings=args.openai_embeddings
     )
 
-    vector_store = builder.build_index(
+    builder.build_index(
         candidates_path=settings.candidates_path,
         roles_path=settings.roles_path
     )

@@ -5,10 +5,7 @@ This module provides the Streamlit frontend for the
 Talent Intelligence Assistant.
 """
 
-import json
-import time
-from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 import streamlit as st
 import requests
@@ -136,7 +133,7 @@ def render_candidate_card(candidate: dict, match_score: Optional[float] = None):
         # Add to comparison button
         candidate_id = candidate.get("id") or candidate.get("candidate_id")
         if candidate_id:
-            if st.button(f"Add to Compare", key=f"add_{candidate_id}"):
+            if st.button("Add to Compare", key=f"add_{candidate_id}"):
                 if candidate_id not in st.session_state.comparison_candidates:
                     st.session_state.comparison_candidates.append(candidate_id)
                     st.success(f"Added {candidate.get('name', candidate_id)} to comparison")
@@ -330,7 +327,7 @@ def main():
                     results = search_candidates(search_query, filters, num_results)
 
                 if results:
-                    st.success(f"Found matching candidates")
+                    st.success("Found matching candidates")
 
                     # Display answer
                     st.markdown("### AI Analysis")

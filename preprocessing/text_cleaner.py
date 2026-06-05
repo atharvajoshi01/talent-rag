@@ -6,7 +6,6 @@ before chunking and embedding.
 """
 
 import re
-from typing import Optional
 
 from loguru import logger
 

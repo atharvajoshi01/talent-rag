@@ -2,7 +2,6 @@
 Tests for evaluation metrics module.
 """
 
-import pytest
 from talent_rag.evaluation.metrics import (
     calculate_recall_at_k,
     calculate_precision_at_k,

@@ -10,7 +10,6 @@ from collections import defaultdict
 from typing import Any, Optional
 from dataclasses import dataclass
 
-import numpy as np
 from loguru import logger
 
 from ..embeddings import EmbeddingModel

@@ -5,10 +5,9 @@ This module provides reranking functionality to improve
 retrieval quality by re-scoring retrieved documents.
 """
 
-from typing import Any, Optional
+from typing import Optional
 from abc import ABC, abstractmethod
 
-import numpy as np
 from loguru import logger
 
 from ..vectorstore.faiss_store import SearchResult

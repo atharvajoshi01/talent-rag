@@ -5,8 +5,7 @@ This module provides semantic search functionality using
 vector similarity for the Talent RAG system.
 """
 
-from typing import Any, Optional
-import numpy as np
+from typing import Optional
 
 from loguru import logger
 

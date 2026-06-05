@@ -341,11 +341,11 @@ class CandidateGenerator:
             descriptions = [
                 f"Led development of {self.faker.bs()} using {', '.join(skill_mentions[:2])}.",
                 f"Built scalable systems handling {random.randint(100, 10000)}K+ requests/day.",
-                f"Collaborated with cross-functional teams to deliver key product features.",
+                "Collaborated with cross-functional teams to deliver key product features.",
                 f"Mentored {random.randint(2, 8)} junior engineers on best practices.",
                 f"Designed and implemented {self.faker.catch_phrase().lower()} infrastructure.",
                 f"Reduced system latency by {random.randint(20, 60)}% through optimization.",
-                f"Contributed to open-source projects and internal tooling.",
+                "Contributed to open-source projects and internal tooling.",
             ]
 
             experiences.append(Experience(
@@ -385,22 +385,22 @@ class CandidateGenerator:
         """
         # Professional summary
         specialization_summaries = {
-            "ml_engineer": f"Experienced Machine Learning Engineer with expertise in "
-                          f"building production ML systems, developing deep learning models, "
-                          f"and deploying scalable AI solutions.",
-            "data_scientist": f"Data Scientist with strong background in statistical analysis, "
-                             f"predictive modeling, and deriving actionable insights from "
-                             f"complex datasets.",
-            "backend_engineer": f"Backend Engineer specialized in building high-performance, "
-                               f"scalable distributed systems and microservices architectures.",
-            "fullstack_engineer": f"Full-stack Engineer with comprehensive experience across "
-                                 f"frontend and backend technologies, delivering end-to-end "
-                                 f"product solutions."
+            "ml_engineer": "Experienced Machine Learning Engineer with expertise in "
+                          "building production ML systems, developing deep learning models, "
+                          "and deploying scalable AI solutions.",
+            "data_scientist": "Data Scientist with strong background in statistical analysis, "
+                             "predictive modeling, and deriving actionable insights from "
+                             "complex datasets.",
+            "backend_engineer": "Backend Engineer specialized in building high-performance, "
+                               "scalable distributed systems and microservices architectures.",
+            "fullstack_engineer": "Full-stack Engineer with comprehensive experience across "
+                                 "frontend and backend technologies, delivering end-to-end "
+                                 "product solutions."
         }
 
         summary = specialization_summaries.get(
             specialization,
-            f"Software Engineer with proven track record of delivering impactful solutions."
+            "Software Engineer with proven track record of delivering impactful solutions."
         )
 
         resume_parts = [
@@ -450,8 +450,8 @@ class CandidateGenerator:
             f"{random.randint(100, 5000)}+ GitHub stars.",
             f"- Implemented ML pipeline reducing prediction time by {random.randint(30, 70)}% "
             f"while maintaining {random.randint(92, 99)}% accuracy.",
-            f"- Led migration of legacy monolith to microservices, reducing deployment time "
-            f"from hours to minutes.",
+            "- Led migration of legacy monolith to microservices, reducing deployment time "
+            "from hours to minutes.",
             "",
             "## Publications & Talks",
             f"- Published research on {random.choice(SKILL_POOLS['ml_specializations'])} "
@@ -584,11 +584,11 @@ class CandidateGenerator:
             ),
             (
                 "Describe a situation where you had a conflict with a teammate.",
-                f"I had a disagreement with a colleague about the architecture for a new feature. "
-                f"Instead of escalating, I suggested we both prototype our approaches and evaluate "
-                f"them against objective criteria. This data-driven approach helped us identify "
-                f"that a hybrid solution incorporating elements from both designs was optimal. "
-                f"We maintained a great working relationship and delivered a better solution."
+                "I had a disagreement with a colleague about the architecture for a new feature. "
+                "Instead of escalating, I suggested we both prototype our approaches and evaluate "
+                "them against objective criteria. This data-driven approach helped us identify "
+                "that a hybrid solution incorporating elements from both designs was optimal. "
+                "We maintained a great working relationship and delivered a better solution."
             ),
             (
                 "How do you mentor junior team members?",
@@ -600,11 +600,11 @@ class CandidateGenerator:
             ),
             (
                 "Tell me about a project that failed and what you learned.",
-                f"We attempted to build a real-time recommendation system with aggressive timelines. "
-                f"Despite my concerns about scope, we proceeded and ultimately had to descope "
-                f"significantly. I learned the importance of pushback early in the process and "
-                f"now I always advocate for MVP approaches with clear success criteria before "
-                f"committing to full implementation. This has helped me deliver more consistently."
+                "We attempted to build a real-time recommendation system with aggressive timelines. "
+                "Despite my concerns about scope, we proceeded and ultimately had to descope "
+                "significantly. I learned the importance of pushback early in the process and "
+                "now I always advocate for MVP approaches with clear success criteria before "
+                "committing to full implementation. This has helped me deliver more consistently."
             ),
         ]
 
