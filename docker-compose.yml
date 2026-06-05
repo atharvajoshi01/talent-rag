@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # FastAPI Backend
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: talent-rag-api
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LOG_LEVEL=INFO
+      - EMBEDDING_MODEL=all-mpnet-base-v2
+      - LLM_MODEL=gpt-4o
+      - LLM_TEMPERATURE=0.1
+      - USE_OPENAI_EMBEDDINGS=false
+    volumes:
+      - ./data:/app/data
+      - index_data:/app/data/indices
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+    networks:
+      - talent-rag-network
+
+  # Streamlit Frontend
+  ui:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ui
+    container_name: talent-rag-ui
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - talent-rag-network
+
+volumes:
+  index_data:
+    driver: local
+
+networks:
+  talent-rag-network:
+    driver: bridge
