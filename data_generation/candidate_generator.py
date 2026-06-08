@@ -161,8 +161,14 @@ class CandidateGenerator:
         """
         self.faker = Faker()
         if seed is not None:
-            Faker.seed(seed)
-            random.seed(seed)
+            # seed_instance scopes the seed to this Faker instance so two
+            # generators constructed with the same seed produce identical
+            # output. Faker.seed() seeds the shared Generator, which makes
+            # later constructions interfere with earlier ones.
+            self.faker.seed_instance(seed)
+            self._random = random.Random(seed)
+        else:
+            self._random = random
         self.seed = seed
         logger.info(f"CandidateGenerator initialized with seed={seed}")
 
@@ -187,46 +193,46 @@ class CandidateGenerator:
             "Director": (10, 15)
         }
         min_skills, max_skills = seniority_skill_counts.get(seniority, (6, 10))
-        num_skills = random.randint(min_skills, max_skills)
+        num_skills = self._random.randint(min_skills, max_skills)
 
         skills = []
 
         # Add programming languages (2-4)
-        skills.extend(random.sample(
+        skills.extend(self._random.sample(
             SKILL_POOLS["programming_languages"],
-            min(random.randint(2, 4), len(SKILL_POOLS["programming_languages"]))
+            min(self._random.randint(2, 4), len(SKILL_POOLS["programming_languages"]))
         ))
 
         # Add specialization-specific skills
         if specialization in ["ml_engineer", "data_scientist"]:
-            skills.extend(random.sample(
+            skills.extend(self._random.sample(
                 SKILL_POOLS["data_ml"],
-                min(random.randint(3, 6), len(SKILL_POOLS["data_ml"]))
+                min(self._random.randint(3, 6), len(SKILL_POOLS["data_ml"]))
             ))
-            skills.extend(random.sample(
+            skills.extend(self._random.sample(
                 SKILL_POOLS["ml_specializations"],
-                min(random.randint(2, 4), len(SKILL_POOLS["ml_specializations"]))
+                min(self._random.randint(2, 4), len(SKILL_POOLS["ml_specializations"]))
             ))
         elif specialization in ["backend_engineer", "fullstack_engineer"]:
-            skills.extend(random.sample(
+            skills.extend(self._random.sample(
                 SKILL_POOLS["web_frameworks"],
-                min(random.randint(2, 4), len(SKILL_POOLS["web_frameworks"]))
+                min(self._random.randint(2, 4), len(SKILL_POOLS["web_frameworks"]))
             ))
-            skills.extend(random.sample(
+            skills.extend(self._random.sample(
                 SKILL_POOLS["databases"],
-                min(random.randint(2, 4), len(SKILL_POOLS["databases"]))
+                min(self._random.randint(2, 4), len(SKILL_POOLS["databases"]))
             ))
         else:
             # General mix
-            skills.extend(random.sample(
+            skills.extend(self._random.sample(
                 SKILL_POOLS["web_frameworks"],
-                min(random.randint(1, 3), len(SKILL_POOLS["web_frameworks"]))
+                min(self._random.randint(1, 3), len(SKILL_POOLS["web_frameworks"]))
             ))
 
         # Add cloud/devops skills
-        skills.extend(random.sample(
+        skills.extend(self._random.sample(
             SKILL_POOLS["cloud_devops"],
-            min(random.randint(2, 4), len(SKILL_POOLS["cloud_devops"]))
+            min(self._random.randint(2, 4), len(SKILL_POOLS["cloud_devops"]))
         ))
 
         # Deduplicate and limit
@@ -249,37 +255,37 @@ class CandidateGenerator:
         # Higher seniority tends to have more advanced degrees
         if seniority in ["Principal", "Director", "Staff"]:
             # More likely to have advanced degrees
-            if random.random() < 0.4:
-                degree, field_of_study = random.choice([d for d in DEGREES if "Ph.D." in d[0]])
+            if self._random.random() < 0.4:
+                degree, field_of_study = self._random.choice([d for d in DEGREES if "Ph.D." in d[0]])
                 education.append(Education(
                     degree=degree,
                     field=field_of_study,
-                    university=random.choice(UNIVERSITIES),
-                    graduation_year=current_year - random.randint(8, 20)
+                    university=self._random.choice(UNIVERSITIES),
+                    graduation_year=current_year - self._random.randint(8, 20)
                 ))
-            if random.random() < 0.7:
-                degree, field_of_study = random.choice([d for d in DEGREES if "Master's" in d[0]])
+            if self._random.random() < 0.7:
+                degree, field_of_study = self._random.choice([d for d in DEGREES if "Master's" in d[0]])
                 education.append(Education(
                     degree=degree,
                     field=field_of_study,
-                    university=random.choice(UNIVERSITIES),
-                    graduation_year=current_year - random.randint(10, 22)
+                    university=self._random.choice(UNIVERSITIES),
+                    graduation_year=current_year - self._random.randint(10, 22)
                 ))
 
         # Everyone has at least a bachelor's
-        degree, field_of_study = random.choice([d for d in DEGREES if "Bachelor's" in d[0]])
+        degree, field_of_study = self._random.choice([d for d in DEGREES if "Bachelor's" in d[0]])
         base_grad_year = {
-            "Junior": random.randint(0, 3),
-            "Mid-Level": random.randint(3, 6),
-            "Senior": random.randint(6, 12),
-            "Staff": random.randint(10, 18),
-            "Principal": random.randint(12, 22),
-            "Director": random.randint(15, 25)
+            "Junior": self._random.randint(0, 3),
+            "Mid-Level": self._random.randint(3, 6),
+            "Senior": self._random.randint(6, 12),
+            "Staff": self._random.randint(10, 18),
+            "Principal": self._random.randint(12, 22),
+            "Director": self._random.randint(15, 25)
         }
         education.append(Education(
             degree=degree,
             field=field_of_study,
-            university=random.choice(UNIVERSITIES),
+            university=self._random.choice(UNIVERSITIES),
             graduation_year=current_year - base_grad_year.get(seniority, 5)
         ))
 
@@ -306,7 +312,7 @@ class CandidateGenerator:
         remaining_years = years_of_experience
 
         # Determine number of positions based on experience
-        num_positions = min(random.randint(2, 5), max(1, years_of_experience // 2))
+        num_positions = min(self._random.randint(2, 5), max(1, years_of_experience // 2))
 
         titles_by_seniority = {
             "Junior": ["Software Engineer", "Junior Developer", "Associate Engineer"],
@@ -322,37 +328,37 @@ class CandidateGenerator:
             if i == num_positions - 1:
                 duration = remaining_years
             else:
-                duration = random.uniform(1, min(4, remaining_years - (num_positions - i - 1)))
+                duration = self._random.uniform(1, min(4, remaining_years - (num_positions - i - 1)))
 
             remaining_years -= duration
 
             # Generate title based on position in career
             if i == 0:  # Current position
-                title = random.choice(titles_by_seniority.get(seniority, ["Engineer"]))
+                title = self._random.choice(titles_by_seniority.get(seniority, ["Engineer"]))
             else:
                 # Earlier positions have lower seniority
                 earlier_seniority = SENIORITY_LEVELS[
                     max(0, SENIORITY_LEVELS.index(seniority) - i - 1)
                 ]
-                title = random.choice(titles_by_seniority.get(earlier_seniority, ["Engineer"]))
+                title = self._random.choice(titles_by_seniority.get(earlier_seniority, ["Engineer"]))
 
             # Generate description using skills
-            skill_mentions = random.sample(skills, min(3, len(skills)))
+            skill_mentions = self._random.sample(skills, min(3, len(skills)))
             descriptions = [
                 f"Led development of {self.faker.bs()} using {', '.join(skill_mentions[:2])}.",
-                f"Built scalable systems handling {random.randint(100, 10000)}K+ requests/day.",
+                f"Built scalable systems handling {self._random.randint(100, 10000)}K+ requests/day.",
                 "Collaborated with cross-functional teams to deliver key product features.",
-                f"Mentored {random.randint(2, 8)} junior engineers on best practices.",
+                f"Mentored {self._random.randint(2, 8)} junior engineers on best practices.",
                 f"Designed and implemented {self.faker.catch_phrase().lower()} infrastructure.",
-                f"Reduced system latency by {random.randint(20, 60)}% through optimization.",
+                f"Reduced system latency by {self._random.randint(20, 60)}% through optimization.",
                 "Contributed to open-source projects and internal tooling.",
             ]
 
             experiences.append(Experience(
-                company=random.choice(COMPANIES),
+                company=self._random.choice(COMPANIES),
                 title=title,
                 duration_years=round(duration, 1),
-                description=" ".join(random.sample(descriptions, random.randint(2, 4)))
+                description=" ".join(self._random.sample(descriptions, self._random.randint(2, 4)))
             ))
 
             if remaining_years <= 0:
@@ -427,10 +433,10 @@ class CandidateGenerator:
                 "",
                 exp.description,
                 "",
-                f"Key achievements include improving team velocity by {random.randint(15, 40)}%, "
-                f"implementing automated testing pipelines that caught {random.randint(50, 200)} "
+                f"Key achievements include improving team velocity by {self._random.randint(15, 40)}%, "
+                f"implementing automated testing pipelines that caught {self._random.randint(50, 200)} "
                 f"bugs before production, and contributing to architectural decisions that "
-                f"improved system reliability to {random.uniform(99.5, 99.99):.2f}% uptime.",
+                f"improved system reliability to {self._random.uniform(99.5, 99.99):.2f}% uptime.",
                 ""
             ])
 
@@ -445,19 +451,19 @@ class CandidateGenerator:
         resume_parts.extend([
             "## Notable Projects",
             f"- Developed {self.faker.catch_phrase().lower()} system that processed "
-            f"{random.randint(1, 100)}M+ records daily with sub-second latency.",
+            f"{self._random.randint(1, 100)}M+ records daily with sub-second latency.",
             f"- Created open-source library for {self.faker.bs()} with "
-            f"{random.randint(100, 5000)}+ GitHub stars.",
-            f"- Implemented ML pipeline reducing prediction time by {random.randint(30, 70)}% "
-            f"while maintaining {random.randint(92, 99)}% accuracy.",
+            f"{self._random.randint(100, 5000)}+ GitHub stars.",
+            f"- Implemented ML pipeline reducing prediction time by {self._random.randint(30, 70)}% "
+            f"while maintaining {self._random.randint(92, 99)}% accuracy.",
             "- Led migration of legacy monolith to microservices, reducing deployment time "
             "from hours to minutes.",
             "",
             "## Publications & Talks",
-            f"- Published research on {random.choice(SKILL_POOLS['ml_specializations'])} "
-            f"at {random.choice(['NeurIPS', 'ICML', 'ACL', 'CVPR', 'KDD'])} "
-            f"{datetime.now().year - random.randint(1, 4)}.",
-            f"- Speaker at {random.choice(['PyCon', 'KubeCon', 'QCon', 'StrangeLoop'])} "
+            f"- Published research on {self._random.choice(SKILL_POOLS['ml_specializations'])} "
+            f"at {self._random.choice(['NeurIPS', 'ICML', 'ACL', 'CVPR', 'KDD'])} "
+            f"{datetime.now().year - self._random.randint(1, 4)}.",
+            f"- Speaker at {self._random.choice(['PyCon', 'KubeCon', 'QCon', 'StrangeLoop'])} "
             f"on {self.faker.bs()}.",
         ])
 
@@ -496,12 +502,12 @@ class CandidateGenerator:
         # Technical questions based on skills
         tech_questions = [
             (
-                f"Can you explain your experience with {random.choice(skills)}?",
-                f"I have {random.randint(2, 8)} years of hands-on experience with "
-                f"{random.choice(skills)}. In my previous role at {random.choice(COMPANIES)}, "
+                f"Can you explain your experience with {self._random.choice(skills)}?",
+                f"I have {self._random.randint(2, 8)} years of hands-on experience with "
+                f"{self._random.choice(skills)}. In my previous role at {self._random.choice(COMPANIES)}, "
                 f"I used it extensively for building {self.faker.bs()}. I particularly focused on "
                 f"optimizing performance and ensuring code quality through comprehensive testing. "
-                f"One notable project involved reducing latency by {random.randint(30, 60)}% "
+                f"One notable project involved reducing latency by {self._random.randint(30, 60)}% "
                 f"through careful profiling and optimization."
             ),
             (
@@ -509,26 +515,26 @@ class CandidateGenerator:
                 f"Recently, I tackled a complex scaling issue where our system was experiencing "
                 f"degraded performance under high load. After thorough investigation, I identified "
                 f"that the bottleneck was in our database queries. I implemented a combination of "
-                f"query optimization, caching with {random.choice(['Redis', 'Memcached'])}, and "
-                f"horizontal scaling that improved throughput by {random.randint(3, 10)}x while "
-                f"reducing p99 latency from {random.randint(500, 2000)}ms to under 100ms."
+                f"query optimization, caching with {self._random.choice(['Redis', 'Memcached'])}, and "
+                f"horizontal scaling that improved throughput by {self._random.randint(3, 10)}x while "
+                f"reducing p99 latency from {self._random.randint(500, 2000)}ms to under 100ms."
             ),
             (
                 "How do you approach system design for large-scale applications?",
                 f"I follow a structured approach starting with understanding requirements and "
                 f"constraints. I consider factors like expected load, data consistency requirements, "
-                f"and failure modes. For a recent project serving {random.randint(10, 100)}M users, "
-                f"I designed a microservices architecture using {random.choice(skills)} with "
+                f"and failure modes. For a recent project serving {self._random.randint(10, 100)}M users, "
+                f"I designed a microservices architecture using {self._random.choice(skills)} with "
                 f"event-driven communication via Kafka. I ensured high availability through "
                 f"multi-region deployment and implemented circuit breakers for resilience."
             ),
             (
-                f"What's your experience with {random.choice(SKILL_POOLS['cloud_devops'])}?",
-                f"I've been working with cloud technologies for {random.randint(3, 10)} years. "
+                f"What's your experience with {self._random.choice(SKILL_POOLS['cloud_devops'])}?",
+                f"I've been working with cloud technologies for {self._random.randint(3, 10)} years. "
                 f"I'm particularly experienced with infrastructure as code using Terraform, "
                 f"container orchestration with Kubernetes, and implementing CI/CD pipelines. "
                 f"I've led cloud migrations that reduced infrastructure costs by "
-                f"{random.randint(20, 50)}% while improving reliability and deployment velocity."
+                f"{self._random.randint(20, 50)}% while improving reliability and deployment velocity."
             ),
         ]
 
@@ -539,7 +545,7 @@ class CandidateGenerator:
                     "Explain your approach to MLOps and model deployment.",
                     f"I believe in treating ML systems as software products with proper versioning, "
                     f"testing, and monitoring. I've implemented MLOps pipelines using "
-                    f"{random.choice(['MLflow', 'Kubeflow', 'SageMaker'])} for experiment tracking, "
+                    f"{self._random.choice(['MLflow', 'Kubeflow', 'SageMaker'])} for experiment tracking, "
                     f"model registry, and automated deployment. I ensure models are monitored for "
                     f"drift and have automated retraining pipelines. In my last project, this "
                     f"reduced time-to-production from weeks to hours."
@@ -548,14 +554,14 @@ class CandidateGenerator:
                     "How do you handle model performance issues in production?",
                     f"I implement comprehensive monitoring including prediction latency, throughput, "
                     f"and business metrics. For model quality, I track feature drift and prediction "
-                    f"distribution shifts. When I detected a {random.randint(5, 15)}% accuracy drop "
+                    f"distribution shifts. When I detected a {self._random.randint(5, 15)}% accuracy drop "
                     f"in a production model, I quickly identified a data quality issue in an upstream "
                     f"system and implemented validation checks that prevented similar issues."
                 ),
             ])
 
         # Select 4-5 questions
-        selected_tech = random.sample(tech_questions, min(5, len(tech_questions)))
+        selected_tech = self._random.sample(tech_questions, min(5, len(tech_questions)))
 
         for q, a in selected_tech:
             transcript_parts.extend([
@@ -575,12 +581,12 @@ class CandidateGenerator:
         behavioral_questions = [
             (
                 "Tell me about a time when you had to influence without authority.",
-                f"At {random.choice(COMPANIES)}, I identified a critical technical debt issue that "
+                f"At {self._random.choice(COMPANIES)}, I identified a critical technical debt issue that "
                 f"was slowing down the team. I gathered data on the impact, created a compelling "
                 f"presentation, and proposed a phased remediation plan. By showing the ROI in terms "
                 f"of developer productivity and reduced incident count, I convinced leadership to "
-                f"allocate {random.randint(2, 4)} sprints for the initiative. The result was a "
-                f"{random.randint(25, 50)}% reduction in time spent on maintenance."
+                f"allocate {self._random.randint(2, 4)} sprints for the initiative. The result was a "
+                f"{self._random.randint(25, 50)}% reduction in time spent on maintenance."
             ),
             (
                 "Describe a situation where you had a conflict with a teammate.",
@@ -594,7 +600,7 @@ class CandidateGenerator:
                 "How do you mentor junior team members?",
                 f"I believe in a hands-on mentoring approach. I pair program regularly, conduct "
                 f"thorough code reviews focused on teaching, and create documentation for common "
-                f"patterns. I've mentored {random.randint(3, 10)} engineers over my career, several "
+                f"patterns. I've mentored {self._random.randint(3, 10)} engineers over my career, several "
                 f"of whom have been promoted to senior roles. I also organize internal tech talks "
                 f"and encourage my mentees to present, which builds their confidence and visibility."
             ),
@@ -608,7 +614,7 @@ class CandidateGenerator:
             ),
         ]
 
-        selected_behavioral = random.sample(behavioral_questions, min(3, len(behavioral_questions)))
+        selected_behavioral = self._random.sample(behavioral_questions, min(3, len(behavioral_questions)))
 
         for q, a in selected_behavioral:
             transcript_parts.extend([
@@ -623,16 +629,16 @@ class CandidateGenerator:
             "",
             "## Interviewer Notes",
             "",
-            f"**Technical Assessment:** {random.choice(['Strong', 'Very Strong', 'Exceptional'])} - "
-            f"Demonstrated deep knowledge of {', '.join(random.sample(skills, min(3, len(skills))))}.",
+            f"**Technical Assessment:** {self._random.choice(['Strong', 'Very Strong', 'Exceptional'])} - "
+            f"Demonstrated deep knowledge of {', '.join(self._random.sample(skills, min(3, len(skills))))}.",
             "",
-            f"**Communication:** {random.choice(['Clear', 'Articulate', 'Excellent'])} - "
+            f"**Communication:** {self._random.choice(['Clear', 'Articulate', 'Excellent'])} - "
             f"Explained complex concepts effectively.",
             "",
-            f"**Culture Fit:** {random.choice(['Strong', 'Very Strong', 'Excellent'])} - "
+            f"**Culture Fit:** {self._random.choice(['Strong', 'Very Strong', 'Excellent'])} - "
             f"Collaborative mindset, growth-oriented.",
             "",
-            f"**Recommendation:** {random.choice(['Strong Hire', 'Hire', 'Inclined to Hire'])}",
+            f"**Recommendation:** {self._random.choice(['Strong Hire', 'Hire', 'Inclined to Hire'])}",
         ])
 
         return "\n".join(transcript_parts)
@@ -648,8 +654,8 @@ class CandidateGenerator:
             Complete Candidate object
         """
         # Determine candidate attributes
-        seniority = random.choice(SENIORITY_LEVELS)
-        specialization = random.choice([
+        seniority = self._random.choice(SENIORITY_LEVELS)
+        specialization = self._random.choice([
             "ml_engineer", "data_scientist", "backend_engineer", "fullstack_engineer"
         ])
 
@@ -663,7 +669,7 @@ class CandidateGenerator:
             "Director": (15, 25)
         }
         min_yoe, max_yoe = yoe_ranges.get(seniority, (3, 8))
-        years_of_experience = random.randint(min_yoe, max_yoe)
+        years_of_experience = self._random.randint(min_yoe, max_yoe)
 
         name = self.faker.name()
         skills = self._generate_skills(seniority, specialization)
@@ -674,7 +680,7 @@ class CandidateGenerator:
             id=f"CAND_{candidate_id:03d}",
             name=name,
             email=self.faker.email(),
-            location=random.choice(LOCATIONS),
+            location=self._random.choice(LOCATIONS),
             years_of_experience=years_of_experience,
             skills=skills,
             seniority=seniority,

@@ -223,8 +223,14 @@ class RoleGenerator:
         """
         self.faker = Faker()
         if seed is not None:
-            Faker.seed(seed)
-            random.seed(seed)
+            # seed_instance scopes the seed to this Faker instance so two
+            # generators constructed with the same seed produce identical
+            # output. Faker.seed() seeds the shared Generator, which makes
+            # later constructions interfere with earlier ones.
+            self.faker.seed_instance(seed)
+            self._random = random.Random(seed)
+        else:
+            self._random = random
         self.seed = seed
         logger.info(f"RoleGenerator initialized with seed={seed}")
 
@@ -281,7 +287,7 @@ class RoleGenerator:
         base_responsibilities = {
             "ml_engineer": [
                 "Design and implement production ML systems at scale",
-                f"Build and optimize {random.choice(['deep learning', 'NLP', 'computer vision'])} models",
+                f"Build and optimize {self._random.choice(['deep learning', 'NLP', 'computer vision'])} models",
                 "Develop ML pipelines for training, validation, and deployment",
                 "Collaborate with product teams to identify ML opportunities",
                 "Monitor model performance and implement improvements",
@@ -352,7 +358,7 @@ class RoleGenerator:
 
         responsibilities = base_responsibilities.get(role_category, [])[:5]
         if seniority in seniority_additions:
-            responsibilities.extend(random.sample(seniority_additions[seniority], 2))
+            responsibilities.extend(self._random.sample(seniority_additions[seniority], 2))
 
         return responsibilities
 
@@ -401,7 +407,7 @@ class RoleGenerator:
             ])
 
         # Education requirements vary
-        if role_category == "data_scientist" or random.random() < 0.3:
+        if role_category == "data_scientist" or self._random.random() < 0.3:
             qualifications.append(
                 "MS or PhD in Computer Science, Statistics, or related field preferred"
             )
@@ -434,11 +440,11 @@ class RoleGenerator:
             Full job description text
         """
         # Generate team context
-        context_template = random.choice(TEAM_CONTEXTS)
+        context_template = self._random.choice(TEAM_CONTEXTS)
         context = context_template.format(
-            industry=random.choice(INDUSTRIES),
-            product=random.choice(PRODUCTS),
-            mission=random.choice(MISSIONS)
+            industry=self._random.choice(INDUSTRIES),
+            product=self._random.choice(PRODUCTS),
+            mission=self._random.choice(MISSIONS)
         )
 
         # Role-specific descriptions
@@ -501,7 +507,7 @@ forefront of technology.
 
 ## The Team
 
-You'll join a team of {random.randint(5, 15)} engineers who are passionate
+You'll join a team of {self._random.randint(5, 15)} engineers who are passionate
 about building great products. We foster an inclusive environment where
 everyone's voice is heard and valued.
 """
@@ -518,11 +524,11 @@ everyone's voice is heard and valued.
             Complete Role object
         """
         # Select role category and attributes
-        role_category = random.choice(list(ROLE_TEMPLATES.keys()))
+        role_category = self._random.choice(list(ROLE_TEMPLATES.keys()))
         template = ROLE_TEMPLATES[role_category]
 
-        title = random.choice(template["titles"])
-        seniority = random.choice(SENIORITY_LEVELS)
+        title = self._random.choice(template["titles"])
+        seniority = self._random.choice(SENIORITY_LEVELS)
 
         # Adjust title based on seniority
         if seniority == "Junior" and "Junior" not in title and "Associate" not in title:
@@ -536,34 +542,34 @@ everyone's voice is heard and valued.
 
         # Required years based on seniority
         yoe_map = {
-            "Junior": random.randint(0, 2),
-            "Mid-Level": random.randint(2, 4),
-            "Senior": random.randint(5, 8),
-            "Staff": random.randint(8, 12),
-            "Principal": random.randint(12, 15),
-            "Director": random.randint(10, 20)
+            "Junior": self._random.randint(0, 2),
+            "Mid-Level": self._random.randint(2, 4),
+            "Senior": self._random.randint(5, 8),
+            "Staff": self._random.randint(8, 12),
+            "Principal": self._random.randint(12, 15),
+            "Director": self._random.randint(10, 20)
         }
         years_experience = yoe_map.get(seniority, 5)
 
         # Select skills
-        required_skills = random.choice(template["required_skills"])
-        nice_to_have = random.sample(
+        required_skills = self._random.choice(template["required_skills"])
+        nice_to_have = self._random.sample(
             template["nice_to_have"],
             min(4, len(template["nice_to_have"]))
         )
 
-        company = random.choice(COMPANIES)
-        location = random.choice(LOCATIONS)
+        company = self._random.choice(COMPANIES)
+        location = self._random.choice(LOCATIONS)
 
         # Generate benefits
         benefits = [
             "Competitive salary and equity",
-            f"{random.choice(['Unlimited', 'Generous'])} PTO",
+            f"{self._random.choice(['Unlimited', 'Generous'])} PTO",
             "Comprehensive health, dental, and vision insurance",
-            f"${random.randint(1, 5)}K annual learning & development budget",
+            f"${self._random.randint(1, 5)}K annual learning & development budget",
             "401(k) with company match",
             "Flexible work arrangements",
-            f"${random.randint(100, 200)}/month wellness stipend",
+            f"${self._random.randint(100, 200)}/month wellness stipend",
             "Parental leave",
             "Home office setup allowance"
         ]
@@ -586,7 +592,7 @@ everyone's voice is heard and valued.
             qualifications=self._generate_qualifications(
                 seniority, years_experience, required_skills, role_category
             ),
-            benefits=random.sample(benefits, random.randint(5, 7)),
+            benefits=self._random.sample(benefits, self._random.randint(5, 7)),
             salary_range=self._get_salary_range(seniority, role_category)
         )
 

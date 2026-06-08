@@ -53,7 +53,10 @@ class TextCleaner:
         self._email_pattern = re.compile(
             r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
         )
-        self._whitespace_pattern = re.compile(r'\s+')
+        # Horizontal whitespace only. Newlines are handled separately in
+        # _normalize_whitespace so paragraph structure is preserved while
+        # runs of spaces and tabs collapse to a single space.
+        self._whitespace_pattern = re.compile(r'[ \t]+')
         self._special_chars_pattern = re.compile(r'[^\w\s\-.,;:!?\'\"()\[\]{}]')
 
         logger.debug("TextCleaner initialized")
