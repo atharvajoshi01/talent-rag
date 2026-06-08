@@ -285,3 +285,54 @@ class ErrorResponse(BaseModel):
         description="Detailed error information"
     )
     code: str = Field(..., description="Error code")
+
+
+# ============== Async index-build job schemas ==============
+
+class IndexBuildRequest(BaseModel):
+    """Inputs for an async index-build job.
+
+    All paths are optional; at least one of candidates_path or roles_path
+    must be set. When omitted, the API falls back to the configured
+    defaults from `talent_rag.config.settings`.
+    """
+    candidates_path: Optional[str] = Field(
+        default=None,
+        description="Path to candidates JSON, defaults to settings.candidates_path"
+    )
+    roles_path: Optional[str] = Field(
+        default=None,
+        description="Path to roles JSON, defaults to settings.roles_path"
+    )
+    index_dir: Optional[str] = Field(
+        default=None,
+        description="Output directory for the FAISS index, defaults to settings.index_dir"
+    )
+    use_openai_embeddings: Optional[bool] = Field(
+        default=None,
+        description="Override the embedding backend for this job"
+    )
+
+
+class JobResponse(BaseModel):
+    """Current state of a queued or completed job."""
+    job_id: str = Field(..., description="Stable identifier for the job")
+    job_type: str = Field(..., description="Discriminator, e.g. index_build")
+    status: str = Field(
+        ...,
+        description="One of pending, running, succeeded, failed"
+    )
+    progress: Optional[str] = Field(
+        default=None,
+        description="Human-readable progress note set by the worker"
+    )
+    result: Optional[dict[str, Any]] = Field(
+        default=None,
+        description="Populated when status == succeeded"
+    )
+    error: Optional[str] = Field(
+        default=None,
+        description="Populated when status == failed"
+    )
+    created_at: datetime = Field(..., description="Job creation timestamp")
+    updated_at: datetime = Field(..., description="Last state change timestamp")

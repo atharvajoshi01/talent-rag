@@ -20,13 +20,27 @@ from .schemas import (
     HealthResponse,
     ErrorResponse,
     EvidenceItem,
-    MetaInfo
+    MetaInfo,
+    IndexBuildRequest,
+    JobResponse,
 )
+from ..jobs import IndexBuildWorker, JobStore
 
 # Global state for the RAG pipeline
 _rag_pipeline = None
 _roles_data = None
 _candidates_data = None
+_job_store: "JobStore | None" = None
+_worker: "IndexBuildWorker | None" = None
+
+
+def get_job_store() -> JobStore:
+    if _job_store is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Job store not initialized."
+        )
+    return _job_store
 
 
 def get_pipeline():
@@ -66,9 +80,23 @@ async def lifespan(app: FastAPI):
 
     Initializes the RAG pipeline on startup.
     """
-    global _rag_pipeline, _roles_data, _candidates_data
+    global _rag_pipeline, _roles_data, _candidates_data, _job_store, _worker
 
     logger.info("Starting Talent RAG API...")
+
+    # Initialize the async job store + worker first so the index-build
+    # endpoint is usable even when the RAG pipeline cannot initialize.
+    try:
+        from ..config import settings
+
+        jobs_db = settings.data_dir / "jobs.sqlite"
+        jobs_db.parent.mkdir(parents=True, exist_ok=True)
+        _job_store = JobStore(jobs_db)
+        _worker = IndexBuildWorker(_job_store)
+        await _worker.start()
+        logger.info(f"Job store initialized at {jobs_db}")
+    except Exception as e:
+        logger.error(f"Failed to initialize job store: {e}")
 
     try:
         # Import here to avoid circular imports
@@ -148,6 +176,11 @@ async def lifespan(app: FastAPI):
 
     # Cleanup
     logger.info("Shutting down Talent RAG API...")
+    if _worker is not None:
+        try:
+            await _worker.stop()
+        except Exception as e:
+            logger.error(f"Worker shutdown failed: {e}")
 
 
 def create_app() -> FastAPI:
@@ -221,6 +254,71 @@ async def health_check():
         version="1.0.0",
         index_status=index_status
     )
+
+
+# ============== Async index-build job endpoints ==============
+
+def _job_to_response(job) -> JobResponse:
+    return JobResponse(
+        job_id=job.job_id,
+        job_type=job.job_type,
+        status=job.status.value,
+        progress=job.progress,
+        result=job.result,
+        error=job.error,
+        created_at=job.created_at,
+        updated_at=job.updated_at,
+    )
+
+
+@app.post(
+    "/index/build",
+    response_model=JobResponse,
+    status_code=202,
+    tags=["Index"]
+)
+async def enqueue_index_build(
+    request: IndexBuildRequest,
+    store: JobStore = Depends(get_job_store),
+):
+    """Enqueue an index-build job and return immediately with the job_id.
+
+    The actual embedding generation and FAISS index construction happen in
+    a background worker. Poll `/index/jobs/{job_id}` for completion.
+    """
+    from ..config import settings
+
+    payload = {
+        "candidates_path": request.candidates_path or str(settings.candidates_path),
+        "roles_path": request.roles_path or str(settings.roles_path),
+        "index_dir": request.index_dir or str(settings.index_dir),
+        "use_openai_embeddings": (
+            request.use_openai_embeddings
+            if request.use_openai_embeddings is not None
+            else settings.use_openai_embeddings
+        ),
+    }
+    job = store.create(job_type="index_build", payload=payload)
+    logger.info(f"Enqueued index_build job {job.job_id}")
+    return _job_to_response(job)
+
+
+@app.get(
+    "/index/jobs/{job_id}",
+    response_model=JobResponse,
+    tags=["Index"]
+)
+async def get_job(
+    job_id: str,
+    store: JobStore = Depends(get_job_store),
+):
+    """Return the current state of a queued or completed index-build job."""
+    job = store.get(job_id)
+    if job is None:
+        raise HTTPException(
+            status_code=404, detail=f"job {job_id!r} not found"
+        )
+    return _job_to_response(job)
 
 
 @app.post(

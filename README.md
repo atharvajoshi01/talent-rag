@@ -167,11 +167,84 @@ docker-compose up --build
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/health` | GET | Health check and index status |
+| `/index/build` | POST | Enqueue an async index-build job, returns `202` + `job_id` |
+| `/index/jobs/{job_id}` | GET | Poll the current status of an index-build job |
 | `/search_candidates` | POST | Search for candidates with filters |
 | `/compare_candidates` | POST | Compare multiple candidates for a role |
 | `/ask` | POST | General RAG question answering |
 | `/roles` | GET | List all available roles |
 | `/candidates` | GET | List all candidates (paginated) |
+
+## Async indexing (API → queue → worker → state store)
+
+Index construction over a non-trivial candidate corpus is slow: every
+document is chunked, embedded with a sentence-transformer (or OpenAI), and
+written into a FAISS index. Doing that work inside the HTTP request that
+triggered it would block the API for minutes and surface as client
+timeouts. The API decouples submission from execution:
+
+```
+POST /index/build
+        |
+        v
+ +----------------+      +----------------+      +------------------+
+ |  FastAPI       | ---> |  SQLite job    | <--- |  IndexBuildWorker|
+ |  /index/build  |      |  store         |      |  (asyncio task)  |
+ +----------------+      +----------------+      +------------------+
+        |                       ^                         |
+        |                       |                         v
+        |                       |                  IndexBuilder.build_index()
+        |                       |                         |
+        v                       |                         v
+ GET /index/jobs/{id} ----------+                  FAISS index on disk
+```
+
+The submission endpoint enqueues a `Job` into a SQLite-backed `JobStore`
+and returns `202 Accepted` with the new `job_id` immediately. A
+background `IndexBuildWorker` (started in the FastAPI lifespan handler)
+polls the store, atomically claims the next pending job via
+`JobStore.claim_next`, runs `IndexBuilder` in a thread executor so the
+event loop stays responsive, and writes status updates back through the
+same store. Clients poll `/index/jobs/{job_id}` for completion.
+
+SQLite was chosen because it is durable across process restarts and
+requires zero external services, which keeps the local-dev experience
+trivial. The store interface is intentionally narrow (`create`,
+`claim_next`, `set_progress`, `mark_succeeded`, `mark_failed`, `get`) so
+swapping the backend for SQS + DynamoDB or Redis is a single class
+substitution.
+
+Example usage:
+
+```bash
+# 1. Enqueue
+curl -X POST http://localhost:8000/index/build \
+  -H 'content-type: application/json' \
+  -d '{}'
+# -> 202 Accepted
+# {
+#   "job_id": "5f1c...",
+#   "job_type": "index_build",
+#   "status": "pending",
+#   ...
+# }
+
+# 2. Poll until terminal
+curl http://localhost:8000/index/jobs/5f1c...
+# -> 200 OK
+# { "status": "running", "progress": "building index", ... }
+
+curl http://localhost:8000/index/jobs/5f1c...
+# -> 200 OK
+# {
+#   "status": "succeeded",
+#   "result": { "total_documents_indexed": 120, "index_dir": "data/indices" }
+# }
+```
+
+For users who do not want the API at all, `setup_index.py` still runs
+the same build synchronously inside a single Python process. The async
+path is opt-in.
 
 ### Example API Usage
 
